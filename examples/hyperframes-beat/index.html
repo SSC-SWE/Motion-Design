@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>Pop on the Beat — Motion Lab</title>
+    <title>The Lab Loop — Motion-Design</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
       * {
@@ -18,6 +18,7 @@
         height: 1080px;
         overflow: hidden;
         background: #0a0a0a;
+        color: #f4f4f5;
       }
       #root {
         position: relative;
@@ -28,25 +29,85 @@
       .clip {
         position: absolute;
         inset: 0;
-        display: grid;
-        place-items: center;
-        align-content: center;
-        gap: 48px;
       }
-      #hero {
-        width: 240px;
-        height: 240px;
-        border-radius: 50%;
-        background: #ffb070;
-        will-change: transform;
+      .phase {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
       }
-      #caption {
+      .pos-tl {
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 200px 0 0 160px;
+      }
+      .pos-c {
+        align-items: center;
+        justify-content: center;
+      }
+      .pos-cl {
+        align-items: flex-start;
+        justify-content: center;
+        padding: 0 0 0 160px;
+      }
+      .word {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        font-weight: 800;
+        color: #f4f4f5;
+        letter-spacing: -0.03em;
+        line-height: 0.95;
+      }
+      .w-med {
+        font-size: 150px;
+      }
+      .w-big {
+        font-size: 220px;
+      }
+      .w-mark {
+        font-size: 130px;
+      }
+      .w-amber {
+        color: #ffb070;
+      }
+      .sub {
+        margin: 0;
+        font-family: system-ui, sans-serif;
         color: #f4f4f5;
         opacity: 0.45;
-        font-family: system-ui, sans-serif;
         font-size: 40px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .mono {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 56px;
+        opacity: 0.75;
+      }
+      #disc {
+        inset: auto;
+        top: 64px;
+        left: 64px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #ffb070;
+      }
+      #look-disc {
+        inset: auto;
+        top: 410px;
+        left: 1310px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: #ffb070;
+      }
+      #viewfinder {
+        inset: auto;
+        top: 380px;
+        left: 1280px;
+        width: 320px;
+        height: 320px;
+        border: 3px solid rgba(255, 176, 112, 0.75);
+        box-sizing: border-box;
       }
     </style>
   </head>
@@ -55,37 +116,106 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="4"
+      data-duration="15"
       data-width="1920"
       data-height="1080"
     >
-      <section id="scene-hero" class="clip" data-start="0" data-duration="4">
-        <div id="hero"></div>
-        <div id="caption">Pop on the beat · 120 BPM · 24 fps</div>
+      <!-- persistent beat disc: pulses once per beat (120 BPM) for the whole ad -->
+      <div id="disc" class="clip" data-start="0" data-duration="15"></div>
+
+      <!-- phase 1: PROMPT (0.0 - 2.5 s) -->
+      <section id="phase-prompt" class="clip phase pos-tl" data-start="0" data-duration="2.5">
+        <h1 class="word w-med">PROMPT</h1>
+        <p class="sub">every adjective becomes a number</p>
       </section>
+
+      <!-- phase 2: RENDER (2.5 - 6.5 s) -->
+      <section id="phase-render" class="clip phase pos-c" data-start="2.5" data-duration="4">
+        <h1 class="word w-big w-amber">RENDER</h1>
+        <p id="counter" class="mono">000</p>
+      </section>
+
+      <!-- phase 3: LOOK (6.5 - 10.5 s) -->
+      <section id="phase-look" class="clip phase pos-cl" data-start="6.5" data-duration="4">
+        <h1 class="word w-med">LOOK</h1>
+        <p class="sub">frame 84 · peaks late</p>
+      </section>
+      <div id="look-disc" class="clip" data-start="6.5" data-duration="4"></div>
+      <div id="viewfinder" class="clip" data-start="6.8" data-duration="3.7"></div>
+
+      <!-- phase 4: FIX (10.5 - 13.0 s) -->
+      <section id="phase-fix" class="clip phase pos-c" data-start="10.5" data-duration="2.5">
+        <h1 class="word w-big">FIX</h1>
+        <p class="sub">move it 2 frames earlier</p>
+      </section>
+
+      <!-- end frame (13.0 - 15.0 s) -->
+      <section id="phase-end" class="clip phase pos-c" data-start="13" data-duration="2">
+        <h1 class="word w-mark">Motion-Design</h1>
+        <p class="sub">no fake one-shots</p>
+      </section>
+
+      <audio id="score" src="assets/score.wav" data-start="0" data-duration="15"></audio>
     </div>
     <script>
-      // Deterministic: no clock, no Math.random. Beat grid = 120 BPM at 24 fps = 12 frames = 0.5 s.
-      // "Make it pop" as a number: scale 1.0 -> 1.08 -> 1.0, one 6-frame pulse per beat.
-      // Each pulse is a single yoyo tween (ease-out up, ease-in down). Loop closes: scale at
-      // t=0 equals scale at t=4, so frame 96 == frame 0.
+      // Deterministic: no clock, no Math.random. 120 BPM -> 0.5 s beat -> 12 frames at 24 fps.
       const tl = gsap.timeline({ paused: true });
-      const beat = 0.5; // 120 BPM at 24 fps
-      const half = beat / 4; // 6 frames at 24 fps = 0.125 s
-      for (let b = 0; b < 8; b++) {
+      const beat = 0.5;
+      const half = 0.125;
+
+      // 1. Beat disc — one 6-frame pulse per beat, ease-out up / ease-in down, 30 beats.
+      for (let b = 0; b < 30; b++) {
         const t = b * beat;
-        // One tween, two keyframes: ease-out up to the peak, ease-in back down.
         tl.to(
-          "#hero",
+          "#disc",
           {
             keyframes: [
-              { scale: 1.08, duration: half, ease: "power2.out" },
+              { scale: 1.18, duration: half, ease: "power2.out" },
               { scale: 1.0, duration: half, ease: "power2.in" }
             ]
           },
           t
         );
       }
+
+      // 2. PROMPT
+      tl.fromTo("#phase-prompt h1", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.1);
+      tl.fromTo("#phase-prompt p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.45);
+
+      // 3. RENDER — hero moment: word slams in, counter runs 0 -> 360 on the beat grid.
+      tl.fromTo("#phase-render h1", { opacity: 0, scale: 0.9, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: "power3.out" }, 2.6);
+      tl.to("#phase-render h1", { scale: 1.02, duration: 3.3, ease: "none" }, 3.15); // 2% push hold
+      const counter = { v: 0 };
+      tl.to(
+        counter,
+        {
+          v: 360,
+          duration: 4,
+          ease: "none",
+          onUpdate: () => {
+            document.getElementById("counter").textContent = String(Math.round(counter.v)).padStart(3, "0");
+          }
+        },
+        2.5
+      );
+
+      // 4. LOOK — word + subline + a viewfinder zooming on the hero disc, then the "peaks late" nudge.
+      tl.fromTo("#phase-look h1", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 6.6);
+      tl.fromTo("#phase-look p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 6.95);
+      tl.fromTo("#look-disc", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 6.7);
+      tl.fromTo("#viewfinder", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" }, 6.85);
+      tl.to("#look-disc", { x: 6, duration: 0.1, ease: "power1.in" }, 8.0);
+      tl.to("#look-disc", { x: -6, duration: 0.1, ease: "power1.out" }, 8.1);
+      tl.to("#look-disc", { x: 0, duration: 0.15, ease: "power1.inOut" }, 8.2);
+
+      // 5. FIX
+      tl.fromTo("#phase-fix h1", { opacity: 0, scale: 0.92, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "power3.out" }, 10.6);
+      tl.fromTo("#phase-fix p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 10.95);
+
+      // 6. END
+      tl.fromTo("#phase-end h1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 13.1);
+      tl.fromTo("#phase-end p", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 13.5);
+
       window.__timelines["main"] = tl;
       tl.seek(0);
     </script>
